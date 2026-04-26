@@ -1,5 +1,22 @@
 {
-  "users": [],
+  "users": [
+    {
+      "id": "u1",
+      "name": "Test Worker",
+      "email": "worker@test.com",
+      "password": "pass123",
+      "role": "worker",
+      "balance": 280
+    },
+    {
+      "id": "u2",
+      "name": "Test Employer",
+      "email": "employer@test.com",
+      "password": "pass123",
+      "role": "employer",
+      "balance": 5000
+    }
+  ],
   "jobs": [
     {
       "id": "j1",

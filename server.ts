@@ -21,6 +21,7 @@ interface DB {
   jobs: any[];
   submissions: any[];
   transactions: any[];
+  messages: any[];
 }
 
 const defaultDB: DB = {
@@ -28,6 +29,7 @@ const defaultDB: DB = {
   jobs: [],
   submissions: [],
   transactions: [],
+  messages: [],
 };
 
 function readDB(): DB {
@@ -111,6 +113,12 @@ async function startServer() {
   });
 
   // Submissions
+  app.get("/api/submissions/:userId", (req, res) => {
+    const db = readDB();
+    const submissions = db.submissions.filter(s => s.userId === req.params.userId);
+    res.json(submissions);
+  });
+
   app.post("/api/submissions", (req, res) => {
     const submission = {
       id: Math.random().toString(36).substring(7),
@@ -122,6 +130,25 @@ async function startServer() {
     db.submissions.push(submission);
     writeDB(db);
     res.json(submission);
+  });
+
+  // Chat
+  app.get("/api/chat/:jobId", (req, res) => {
+    const db = readDB();
+    const messages = db.messages.filter(m => m.jobId === req.params.jobId);
+    res.json(messages);
+  });
+
+  app.post("/api/chat", (req, res) => {
+    const message = {
+      id: Math.random().toString(36).substring(7),
+      ...req.body,
+      timestamp: new Date().toISOString(),
+    };
+    const db = readDB();
+    db.messages.push(message);
+    writeDB(db);
+    res.json(message);
   });
 
   // Wallet / Transactions

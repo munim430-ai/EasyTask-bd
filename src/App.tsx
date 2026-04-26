@@ -13,8 +13,31 @@ import {
   Clock,
   ChevronRight,
   TrendingUp,
-  Image as ImageIcon
+  Youtube,
+  Twitter,
+  Smartphone,
+  ClipboardList,
+  Zap,
+  Globe,
+  Share2
 } from "lucide-react";
+
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case "Social Media": return <Zap className="text-rose-500 w-6 h-6" />;
+    case "App Install": return <Smartphone className="text-cyan-500 w-6 h-6" />;
+    case "SEO/Website": return <Globe className="text-indigo-500 w-6 h-6" />;
+    case "Surveys": return <ClipboardList className="text-emerald-500 w-6 h-6" />;
+    default: return <Share2 className="text-zinc-400 w-6 h-6" />;
+  }
+};
+
+const getJobBrandIcon = (title: string) => {
+  const lowerTitle = title.toLowerCase();
+  if (lowerTitle.includes("youtube")) return <Youtube className="text-red-500 w-6 h-6" />;
+  if (lowerTitle.includes("twitter") || lowerTitle.includes(" x ")) return <Twitter className="text-sky-400 w-6 h-6" />;
+  return null;
+};
 import { motion, AnimatePresence } from "motion/react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -93,14 +116,26 @@ const BottomNav = ({ role }: { role: "worker" | "employer" }) => {
             key={item.path}
             to={item.path}
             className={cn(
-              "flex flex-col items-center gap-1 transition-all duration-300 relative",
-              isActive ? "text-primary scale-110" : "text-zinc-500 hover:text-zinc-300"
+              "flex flex-col items-center gap-1 transition-all duration-300 relative px-4 py-2",
+              isActive ? "text-primary" : "text-zinc-500 hover:text-zinc-300"
             )}
           >
-            <item.icon className={cn("w-6 h-6", isActive && "stroke-[2.5px]")} />
-            <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+            <motion.div
+              whileHover={{ rotateY: 15, scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="relative"
+            >
+              <item.icon className={cn("w-6 h-6", isActive && "stroke-[2.5px]")} />
+              {isActive && (
+                <motion.div 
+                  layoutId="nav-bg"
+                  className="absolute inset-[-12px] bg-primary/10 blur-xl rounded-full -z-10"
+                />
+              )}
+            </motion.div>
+            <span className="text-[9px] font-black uppercase tracking-[0.2em]">{item.label}</span>
             {isActive && (
-              <motion.div layoutId="nav-glow" className="absolute -top-1 w-6 h-0.5 bg-primary rounded-full shadow-[0_0_8px_rgba(225,29,72,0.5)]" />
+              <motion.div layoutId="nav-glow" className="absolute -top-1 w-8 h-0.5 bg-primary rounded-full shadow-[0_0_12px_rgba(225,29,72,0.8)]" />
             )}
           </Link>
         );
@@ -114,6 +149,10 @@ const BottomNav = ({ role }: { role: "worker" | "employer" }) => {
 const Home = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("All");
+  const [search, setSearch] = useState("");
+
+  const categories = ["All", "Social Media", "SEO/Website", "App Install", "Surveys"];
 
   useEffect(() => {
     fetch("/api/jobs")
@@ -123,6 +162,12 @@ const Home = () => {
         setLoading(false);
       });
   }, []);
+
+  const filteredJobs = jobs.filter(j => {
+    const matchesFilter = filter === "All" || j.category === filter;
+    const matchesSearch = j.title.toLowerCase().includes(search.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
   if (loading) return <div className="p-8 text-center text-zinc-500 font-mono text-xs uppercase tracking-widest">Initalizing Database...</div>;
 
@@ -138,67 +183,157 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between px-1">
-        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">Available Tasks</h3>
-        <button className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 bg-white/5 rounded-full border border-white/5 text-zinc-300">Filter</button>
+      <div className="space-y-4">
+        <div className="relative">
+          <input 
+            type="text" 
+            placeholder="Search Protocols..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full p-4 bg-zinc-900 border border-white/5 rounded-2xl focus:ring-1 focus:ring-primary/40 focus:outline-none text-xs text-zinc-300"
+          />
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+          {categories.map(c => (
+            <button
+              key={c}
+              onClick={() => setFilter(c)}
+              className={cn(
+                "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border",
+                filter === c ? "bg-primary border-primary text-white" : "bg-white/5 border-white/5 text-zinc-500 hover:text-zinc-300"
+              )}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="space-y-4">
-        {jobs.length === 0 ? (
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">Available Tasks</h3>
+      </div>
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-4"
+      >
+        {filteredJobs.length === 0 ? (
           <div className="text-center py-20 bg-card rounded-3xl border border-white/5 border-dashed">
             <Briefcase className="w-8 h-8 text-zinc-700 mx-auto mb-2 opacity-20" />
             <p className="text-xs font-bold uppercase tracking-widest text-zinc-600">No tasks detected</p>
           </div>
         ) : (
-          jobs.map((job) => (
-            <Link
+          filteredJobs.map((job, index) => (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
               key={job.id}
-              to={`/job/${job.id}`}
-              className="block bg-card p-4 rounded-2xl border border-white/5 card-shadow active:scale-[0.98] transition-all hover:border-white/10"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center border border-white/5 ring-1 ring-white/5">
-                    <ImageIcon className="text-zinc-600 w-6 h-6" />
+              <Link
+                to={`/job/${job.id}`}
+                className="group block bg-card p-5 rounded-[2rem] border border-white/5 card-shadow active:scale-[0.98] transition-all hover:border-primary/20 hover:bg-white/[0.04] relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/10 transition-colors" />
+                
+                <div className="flex items-start justify-between relative z-10">
+                  <div className="flex gap-4">
+                    <div className="w-14 h-14 bg-zinc-900 border border-white/5 rounded-2xl flex items-center justify-center ring-1 ring-white/5 group-hover:ring-primary/30 transition-all">
+                      {getJobBrandIcon(job.title) || getCategoryIcon(job.category)}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-[15px] leading-tight tracking-tight group-hover:text-primary transition-colors">{job.title}</h4>
+                      <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mt-2">{job.category}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-white text-sm leading-tight tracking-tight">{job.title}</h4>
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-tighter mt-1.5">{job.category}</p>
+                  <div className="text-right">
+                    <div className="bg-secondary/10 px-3 py-1 rounded-full border border-secondary/20">
+                      <p className="text-secondary font-black text-xs">৳{job.budgetPerTask}</p>
+                    </div>
+                    <p className="text-[9px] text-zinc-600 uppercase font-black tracking-widest mt-2">Reward</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-secondary font-black text-sm">৳{job.budgetPerTask}</p>
-                  <p className="text-[9px] text-zinc-600 uppercase font-black tracking-widest mt-0.5">Reward</p>
-                </div>
-              </div>
-              <div className="mt-5 pt-4 border-t border-white/[0.03] flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-3 h-3 text-zinc-600" />
-                  <span className="text-[10px] font-bold text-zinc-600">2 MINUTES AGO</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-1 w-16 bg-zinc-900 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-secondary rounded-full" 
-                      style={{ width: `${(job.remaining / job.totalNeeded) * 100}%` }} 
-                    />
+                <div className="mt-6 pt-5 border-t border-white/[0.03] flex items-center justify-between relative z-10">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Live Protocol</span>
                   </div>
-                  <span className="text-[10px] font-black text-secondary uppercase tracking-tighter">
-                    {job.remaining} LEFT
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="h-1.5 w-24 bg-zinc-900 rounded-full overflow-hidden ring-1 ring-white/5">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(job.remaining / job.totalNeeded) * 100}%` }}
+                        className="h-full bg-gradient-to-r from-secondary to-orange-500 rounded-full" 
+                      />
+                    </div>
+                    <span className="text-[10px] font-black text-white px-2 py-0.5 bg-white/5 border border-white/10 rounded-md">
+                      {job.remaining} LEFT
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </motion.div>
           ))
         )}
+      </motion.div>
+    </div>
+  );
+};
+
+const Chat = ({ jobId, user }: { jobId: string; user: UserData }) => {
+  const [messages, setMessages] = useState<any[]>([]);
+  const [input, setInput] = useState("");
+
+  useEffect(() => {
+    const fetchMessages = () => {
+      fetch(`/api/chat/${jobId}`)
+        .then(res => res.json())
+        .then(data => setMessages(data));
+    };
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 3000);
+    return () => clearInterval(interval);
+  }, [jobId]);
+
+  const send = () => {
+    if (!input.trim()) return;
+    fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jobId, userId: user.id, userName: user.name, text: input })
+    }).then(() => setInput(""));
+  };
+
+  return (
+    <div className="bg-card p-6 rounded-3xl border border-white/5 space-y-4 h-[400px] flex flex-col">
+      <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Protocol Support</h3>
+      <div className="flex-1 overflow-y-auto space-y-3 no-scrollbar">
+        {messages.map(m => (
+          <div key={m.id} className={cn("max-w-[80%] p-3 rounded-2xl text-[10px]", m.userId === user.id ? "ml-auto bg-primary/20 text-white" : "mr-auto bg-white/5 text-zinc-400")}>
+            <p className="font-black uppercase tracking-tighter opacity-50 mb-1">{m.userId === user.id ? "You" : m.userName}</p>
+            <p className="leading-relaxed">{m.text}</p>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input 
+          type="text" 
+          value={input} 
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type message..." 
+          className="flex-1 bg-zinc-900 border border-white/5 p-3 rounded-xl text-[10px] text-white focus:outline-none"
+        />
+        <button onClick={send} className="bg-primary px-4 rounded-xl text-[10px] font-black uppercase">Send</button>
       </div>
     </div>
   );
 };
 
-const JobDetail = () => {
+const JobDetail = ({ user }: { user: UserData }) => {
   const [job, setJob] = useState<Job | null>(null);
   const [proof, setProof] = useState("");
+  const [showChat, setShowChat] = useState(false);
   const location = useLocation();
   const jobId = location.pathname.split("/").pop();
 
@@ -211,60 +346,90 @@ const JobDetail = () => {
       });
   }, [jobId]);
 
+  const handleSubmit = () => {
+    if (!proof.trim()) return alert("Proof data required.");
+    fetch("/api/submissions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jobId, userId: user.id, proofData: proof, jobTitle: job?.title })
+    }).then(() => {
+      alert("Protocol completed. Verification pending.");
+      window.history.back();
+    });
+  };
+
   if (!job) return <div className="p-20 text-center font-mono text-[10px] uppercase tracking-widest text-zinc-600">Retrieving job record...</div>;
 
   return (
-    <div className="p-4 space-y-6 pb-24">
-      <div className="bg-card p-6 rounded-3xl card-shadow border border-white/5">
-        <h2 className="text-2xl font-light tracking-tight text-white mb-2">{job.title}</h2>
-        <div className="flex items-center gap-2">
-          <span className="inline-block bg-secondary/10 text-secondary text-[10px] font-black tracking-widest px-2 py-1 rounded uppercase">
-            {job.category}
-          </span>
-          <span className="text-zinc-700 text-xs">•</span>
-          <span className="text-secondary text-[10px] font-black tracking-wider uppercase">{job.remaining} TASKS LEFT</span>
-        </div>
-        
-        <div className="mt-10 space-y-4">
-          <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
-            <div className="w-1 h-3 bg-primary rounded-full"></div>
-            Job Extraction
-          </p>
-          <p className="text-xs text-zinc-400 leading-relaxed bg-white/[0.02] p-5 rounded-2xl border border-white/[0.03]">
-            {job.description}
-          </p>
-        </div>
-
-        <div className="mt-8 space-y-4">
-          <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Proof Logic</p>
-          <div className="p-5 bg-white/[0.02] rounded-2xl border border-dashed border-white/10">
-            <p className="text-xs text-secondary/80 font-medium italic">"{job.proofInstructions}"</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-card p-6 rounded-3xl card-shadow border border-white/5 space-y-5">
-        <h3 className="text-sm font-bold text-white tracking-tight">Deployment Proof</h3>
-        <textarea
-          value={proof}
-          onChange={(e) => setProof(e.target.value)}
-          placeholder="System output or verification code..."
-          className="w-full h-32 p-4 bg-zinc-900/50 rounded-2xl border border-white/5 focus:ring-1 focus:ring-primary/40 focus:outline-none transition-all text-xs font-mono text-zinc-400 placeholder:text-zinc-700"
-        />
-        <button className="w-full py-5 bg-white/5 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-white/[0.08] transition-all">
-          <PlusCircle className="w-6 h-6 text-zinc-600 group-hover:text-primary transition-all" />
-          <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest group-hover:text-zinc-400">Attach Screenshot</span>
+    <div className="p-4 space-y-6 pb-32">
+      <div className="flex gap-2 mb-2">
+        <button 
+          onClick={() => setShowChat(false)}
+          className={cn("flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all", !showChat ? "bg-white/10 border-white/10 text-white" : "border-white/5 text-zinc-600")}
+        >
+          Protocol Specs
         </button>
         <button 
-          onClick={() => {
-            alert("Protocol completed. Verification pending.");
-            window.history.back();
-          }}
-          className="w-full py-4 bg-primary text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 active:scale-[0.98] transition-all"
+          onClick={() => setShowChat(true)}
+          className={cn("flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all", showChat ? "bg-white/10 border-white/10 text-white" : "border-white/5 text-zinc-600")}
         >
-          Submit Protocol
+          Live Feed
         </button>
       </div>
+
+      {!showChat ? (
+        <>
+          <div className="bg-card p-6 rounded-3xl card-shadow border border-white/5">
+            <h2 className="text-2xl font-light tracking-tight text-white mb-2">{job.title}</h2>
+            <div className="flex items-center gap-2">
+              <span className="inline-block bg-secondary/10 text-secondary text-[10px] font-black tracking-widest px-2 py-1 rounded uppercase">
+                {job.category}
+              </span>
+              <span className="text-zinc-700 text-xs">•</span>
+              <span className="text-secondary text-[10px] font-black tracking-wider uppercase">{job.remaining} TASKS LEFT</span>
+            </div>
+            
+            <div className="mt-10 space-y-4">
+              <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest flex items-center gap-2">
+                <div className="w-1 h-3 bg-primary rounded-full"></div>
+                Job Extraction
+              </p>
+              <p className="text-xs text-zinc-400 leading-relaxed bg-white/[0.02] p-5 rounded-2xl border border-white/[0.03]">
+                {job.description}
+              </p>
+            </div>
+
+            <div className="mt-8 space-y-4">
+              <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Proof Logic</p>
+              <div className="p-5 bg-white/[0.02] rounded-2xl border border-dashed border-white/10">
+                <p className="text-xs text-secondary/80 font-medium italic">"{job.proofInstructions}"</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-card p-6 rounded-3xl card-shadow border border-white/5 space-y-5">
+            <h3 className="text-sm font-bold text-white tracking-tight">Deployment Proof</h3>
+            <textarea
+              value={proof}
+              onChange={(e) => setProof(e.target.value)}
+              placeholder="System output or verification code..."
+              className="w-full h-32 p-4 bg-zinc-900/50 rounded-2xl border border-white/5 focus:ring-1 focus:ring-primary/40 focus:outline-none transition-all text-xs font-mono text-zinc-400 placeholder:text-zinc-700"
+            />
+            <button className="w-full py-5 bg-white/5 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-1 group hover:bg-white/[0.08] transition-all">
+              <PlusCircle className="w-6 h-6 text-zinc-600 group-hover:text-primary transition-all" />
+              <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest group-hover:text-zinc-400">Attach Screenshot</span>
+            </button>
+            <button 
+              onClick={handleSubmit}
+              className="w-full py-4 bg-primary text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 active:scale-[0.98] transition-all"
+            >
+              Submit Protocol
+            </button>
+          </div>
+        </>
+      ) : (
+        <Chat jobId={jobId!} user={user} />
+      )}
     </div>
   );
 };
@@ -579,13 +744,81 @@ const Auth = ({ onLogin }: { onLogin: (u: UserData) => void }) => {
   );
 };
 
+const Submissions = ({ user }: { user: UserData }) => {
+  const [subs, setSubs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/submissions/${user.id}`)
+      .then(res => res.json())
+      .then(data => {
+        setSubs(data);
+        setLoading(false);
+      });
+  }, [user.id]);
+
+  if (loading) return <div className="p-20 text-center font-mono text-[10px] uppercase tracking-widest text-zinc-600">Scanning history...</div>;
+
+  return (
+    <div className="p-4 space-y-6">
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">Task History</h3>
+      </div>
+      <div className="space-y-4">
+        {subs.length === 0 ? (
+          <div className="text-center py-20 bg-card rounded-3xl border border-white/5 border-dashed">
+            <CheckCircle2 className="w-8 h-8 text-zinc-700 mx-auto mb-2 opacity-20" />
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-600">No records found</p>
+          </div>
+        ) : (
+          subs.map((s: any) => (
+            <div key={s.id} className="bg-card p-5 rounded-2xl border border-white/5 card-shadow flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-bold text-white mb-1">{s.jobTitle}</h4>
+                <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest">{new Date(s.submittedAt).toLocaleDateString()}</p>
+              </div>
+              <div className={cn(
+                "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                s.status === "pending" ? "bg-amber-500/10 border-amber-500/20 text-amber-500" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+              )}>
+                {s.status}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Default demo account
+  const demoWorker: UserData = {
+    id: "demo-u1",
+    name: "Demo Worker",
+    email: "worker@test.com",
+    role: "worker",
+    balance: 280
+  };
+
+  const demoEmployer: UserData = {
+    id: "demo-u2",
+    name: "Demo Employer",
+    email: "employer@test.com",
+    role: "employer",
+    balance: 5000
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem("user");
-    if (saved) setUser(JSON.parse(saved));
+    if (saved) {
+      setUser(JSON.parse(saved));
+    } else {
+      setUser(demoWorker); // Default to worker for demo
+    }
     setLoading(false);
   }, []);
 
@@ -595,13 +828,18 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    setUser(null);
+    setUser(demoWorker); // Reset to demo instead of clearing
     localStorage.removeItem("user");
   };
 
-  if (loading) return null;
+  const toggleDemoRole = () => {
+    if (!user) return;
+    const newUser = user.role === "worker" ? demoEmployer : demoWorker;
+    setUser(newUser);
+    localStorage.setItem("user", JSON.stringify(newUser));
+  };
 
-  if (!user) return <Auth onLogin={handleLogin} />;
+  if (loading || !user) return null;
 
   return (
     <BrowserRouter>
@@ -611,10 +849,10 @@ export default function App() {
         <main className="max-w-md mx-auto relative z-10">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/job/:id" element={<JobDetail />} />
+            <Route path="/job/:id" element={<JobDetail user={user} />} />
             <Route path="/wallet" element={<WalletPage user={user} />} />
             <Route path="/post-job" element={user.role === "employer" ? <PostJob /> : <Navigate to="/" />} />
-            <Route path="/submissions" element={<div className="p-20 text-center font-mono text-[10px] uppercase tracking-widest text-zinc-600">No active protocols detected.</div>} />
+            <Route path="/submissions" element={<Submissions user={user} />} />
             <Route path="/profile" element={
               <div className="p-8 text-center space-y-10 relative">
                 <div className="space-y-4">
@@ -640,6 +878,12 @@ export default function App() {
                 </div>
 
                 <div className="space-y-3">
+                   <button 
+                    onClick={toggleDemoRole}
+                    className="w-full py-4 bg-primary/20 border border-primary/30 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:bg-primary/30 transition-all"
+                   >
+                    Switch to {user.role === 'worker' ? 'Employer' : 'Worker'} Mode
+                   </button>
                    <button className="w-full py-4 bg-white/5 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:bg-white/10 transition-all">Verification Status: Verified</button>
                    <button className="w-full py-4 bg-white/5 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:bg-white/10 transition-all">Settings & Privacy</button>
                 </div>
