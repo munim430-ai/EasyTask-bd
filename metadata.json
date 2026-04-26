@@ -1,0 +1,12 @@
+{
+  "name": "EasyTask Pro",
+  "description": "A modern micro-tasking marketplace for micro-jobs, featuring secure escrow payments and real-time proof verification.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "Firebase",
+    "Real-time Chat",
+    "Wallet System"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "users": [],
+  "jobs": [
+    {
+      "id": "j1",
+      "title": "Subscribe to YouTube Channel",
+      "category": "Social Media",
+      "description": "Visit 'EasyTaskBD' on YouTube and subscribe. Stay subscribed for at least 30 days.",
+      "proofInstructions": "Submit your YouTube channel name and a screenshot of the subscription.",
+      "budgetPerTask": 2,
+      "totalNeeded": 500,
+      "remaining": 482,
+      "status": "active",
+      "createdAt": "2024-03-24T10:00:00.000Z"
+    },
+    {
+      "id": "j2",
+      "title": "Follow Protocol on Twitter (X)",
+      "category": "Social Media",
+      "description": "Follow our official handle @EasyTaskBD for instant updates.",
+      "proofInstructions": "Submit your handle name.",
+      "budgetPerTask": 1.5,
+      "totalNeeded": 1000,
+      "remaining": 950,
+      "status": "active",
+      "createdAt": "2024-03-24T11:00:00.000Z"
+    },
+    {
+      "id": "j3",
+      "title": "Alpha App Installation",
+      "category": "App Install",
+      "description": "Download and install the EasyTask Testnet app. Open for 30 seconds.",
+      "proofInstructions": "Send device ID shown in settings.",
+      "budgetPerTask": 5,
+      "totalNeeded": 200,
+      "remaining": 120,
+      "status": "active",
+      "createdAt": "2024-03-24T12:00:00.000Z"
+    }
+  ],
+  "submissions": [],
+  "transactions": []
+}

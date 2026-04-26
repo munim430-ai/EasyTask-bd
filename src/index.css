@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #E11D48; /* Sophisticated Rose */
+  --color-secondary: #2dd4bf; /* Teal */
+  --color-success: #10b981;
+  --color-background: #050505;
+  --color-card: #111112;
+  --color-surface: #0a0a0b;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+body {
+  @apply bg-background text-zinc-400;
+}
+
+.bottom-nav-blur {
+  background: rgba(17, 17, 18, 0.85);
+  backdrop-filter: blur(12px);
+}
+
+.card-shadow {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+}
+
+.glass-morphism {
+  @apply bg-white/5 border border-white/10 backdrop-blur-md;
+}
+
+@layer base {
+  * {
+    @apply border-white/5;
+  }
+}
+
+.radial-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(225, 29, 72, 0.05), transparent 70%);
+}
