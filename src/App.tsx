@@ -156,9 +156,16 @@ const Home = () => {
 
   useEffect(() => {
     fetch("/api/jobs")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Connection failed");
+        return res.json();
+      })
       .then(data => {
         setJobs(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
         setLoading(false);
       });
   }, []);
@@ -169,19 +176,56 @@ const Home = () => {
     return matchesFilter && matchesSearch;
   });
 
-  if (loading) return <div className="p-8 text-center text-zinc-500 font-mono text-xs uppercase tracking-widest">Initalizing Database...</div>;
+  if (loading) return (
+    <div className="p-20 text-center space-y-4">
+      <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto opacity-40"></div>
+      <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">Establishing Secure Connection...</p>
+    </div>
+  );
+
+  if (jobs.length === 0 && !loading) return (
+    <div className="p-20 text-center space-y-6">
+      <div className="relative">
+        <AlertCircle className="w-16 h-16 text-zinc-800 mx-auto opacity-20" />
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ repeat: Infinity, duration: 2 }}
+          className="absolute inset-0 bg-red-500/5 blur-2xl rounded-full"
+        ></motion.div>
+      </div>
+      <div className="space-y-2">
+        <p className="text-xs font-bold text-white uppercase tracking-widest">Handshake Failed</p>
+        <p className="text-[10px] text-zinc-500 uppercase tracking-widest leading-relaxed">The server nodes are not responding to queries. Please verify network status.</p>
+      </div>
+      <button 
+        onClick={() => window.location.reload()} 
+        className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] text-primary font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+      >
+        Retry Protocol
+      </button>
+    </div>
+  );
 
   return (
     <div className="p-4 space-y-6">
-      <div className="bg-primary/10 p-5 rounded-3xl border border-primary/20 flex items-center justify-between overflow-hidden relative">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-primary/10 p-6 rounded-[2rem] border border-primary/20 flex items-center justify-between overflow-hidden relative group"
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
         <div className="relative z-10">
-          <h2 className="font-bold text-white text-lg">Limited Time Bonus!</h2>
-          <p className="text-xs text-primary/80 font-medium">Earn 5% extra on social media tasks today.</p>
+          <div className="flex items-center gap-2 mb-1">
+            <Zap className="w-3 h-3 text-primary animate-pulse" />
+            <h2 className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">Live Incentive</h2>
+          </div>
+          <h2 className="font-bold text-white text-xl tracking-tight">Limited Time Bonus!</h2>
+          <p className="text-[10px] text-zinc-500 font-medium mt-1">Earn 5% extra on social media tasks today.</p>
         </div>
-        <div className="absolute right-[-10px] top-[-10px] opacity-10">
+        <div className="absolute right-[-10px] top-[-10px] opacity-10 group-hover:scale-110 transition-transform">
           <TrendingUp className="text-primary w-24 h-24" />
         </div>
-      </div>
+      </motion.div>
 
       <div className="space-y-4">
         <div className="relative">
@@ -419,12 +463,14 @@ const JobDetail = ({ user }: { user: UserData }) => {
               <PlusCircle className="w-6 h-6 text-zinc-600 group-hover:text-primary transition-all" />
               <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest group-hover:text-zinc-400">Attach Screenshot</span>
             </button>
-            <button 
+            <motion.button 
+              whileHover={{ scale: 1.02, translateY: -2 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleSubmit}
-              className="w-full py-4 bg-primary text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 active:scale-[0.98] transition-all"
+              className="w-full py-5 bg-gradient-to-r from-primary to-rose-600 text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 active:scale-[0.98] transition-all border border-white/10"
             >
               Submit Protocol
-            </button>
+            </motion.button>
           </div>
         </>
       ) : (
@@ -454,21 +500,30 @@ const WalletPage = ({ user }: { user: UserData }) => {
 
   return (
     <div className="p-4 space-y-6">
-      <div className="bg-gradient-to-br from-primary to-[#9F1239] p-8 rounded-[2.5rem] text-white shadow-2xl shadow-primary/30 relative overflow-hidden ring-1 ring-white/20">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-gradient-to-br from-primary via-rose-600 to-[#9F1239] p-8 rounded-[2.5rem] text-white shadow-2xl shadow-primary/30 relative overflow-hidden group"
+      >
+        <motion.div 
+          animate={{ rotate: [0, 5, 0] }}
+          transition={{ repeat: Infinity, duration: 10, ease: "linear" }}
+          className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/10 blur-3xl rounded-full"
+        />
         <div className="relative z-10">
           <p className="text-[10px] font-black opacity-60 uppercase tracking-[0.2em]">Liquid Balance</p>
           <h2 className="text-4xl font-black mt-2 flex items-baseline gap-2">
             <span className="text-xl font-bold opacity-50">৳</span>{balance.toLocaleString()}
           </h2>
           <div className="mt-8 flex gap-3">
-             <button className="bg-white/20 hover:bg-white/30 backdrop-blur-md px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Cash Out</button>
-             <button className="bg-black/20 hover:bg-black/30 backdrop-blur-md px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">History</button>
+             <button className="bg-white/20 hover:bg-white/30 backdrop-blur-md px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/10">Cash Out</button>
+             <button className="bg-black/20 hover:bg-black/30 backdrop-blur-md px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/5">History</button>
           </div>
         </div>
-        <div className="absolute right-[-20%] bottom-[-20%] opacity-10 blur-xl">
-          <Wallet className="w-64 h-64" />
+        <div className="absolute right-0 bottom-[-10px] opacity-10 group-hover:scale-110 transition-transform duration-700">
+          <Wallet className="w-48 h-48 rotate-[-15deg]" />
         </div>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-card p-6 rounded-3xl border border-white/5 card-shadow">
@@ -750,14 +805,20 @@ const Submissions = ({ user }: { user: UserData }) => {
 
   useEffect(() => {
     fetch(`/api/submissions/${user.id}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Fetch error");
+        return res.json();
+      })
       .then(data => {
         setSubs(data);
+        setLoading(false);
+      })
+      .catch(() => {
         setLoading(false);
       });
   }, [user.id]);
 
-  if (loading) return <div className="p-20 text-center font-mono text-[10px] uppercase tracking-widest text-zinc-600">Scanning history...</div>;
+  if (loading) return <div className="p-20 text-center font-mono text-[10px] uppercase tracking-widest text-zinc-600 animate-pulse">Syncing encrypted data...</div>;
 
   return (
     <div className="p-4 space-y-6">
