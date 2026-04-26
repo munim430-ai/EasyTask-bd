@@ -91,6 +91,17 @@ const Header = ({ user, onLogout }: { user: UserData | null; onLogout: () => voi
   </header>
 );
 
+const PageTransition = ({ children }: { children: React.ReactNode }) => (
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -20 }}
+    transition={{ duration: 0.2, ease: "easeOut" }}
+  >
+    {children}
+  </motion.div>
+);
+
 const BottomNav = ({ role }: { role: "worker" | "employer" }) => {
   const location = useLocation();
   const navItems = role === "worker" 
@@ -165,7 +176,31 @@ const Home = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        console.error("API Error, using fallback:", err);
+        // Fallback to static data for demo if API fails
+        const fallbackJobs = [
+          {
+            id: "j1",
+            title: "Subscribe to YouTube Channel",
+            category: "Social Media",
+            description: "Visit 'EasyTaskBD' on YouTube and subscribe.",
+            budgetPerTask: 2,
+            totalNeeded: 500,
+            remaining: 482,
+            status: "active"
+          },
+          {
+            id: "j2",
+            title: "Follow Protocol on Twitter (X)",
+            category: "Social Media",
+            description: "Follow @EasyTaskBD for updates.",
+            budgetPerTask: 1.5,
+            totalNeeded: 1000,
+            remaining: 950,
+            status: "active"
+          }
+        ];
+        setJobs(fallbackJobs as any);
         setLoading(false);
       });
   }, []);
@@ -813,7 +848,8 @@ const Submissions = ({ user }: { user: UserData }) => {
         setSubs(data);
         setLoading(false);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Submissions API Error:", err);
         setLoading(false);
       });
   }, [user.id]);
@@ -908,52 +944,58 @@ export default function App() {
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full h-[500px] radial-glow opacity-30 pointer-events-none"></div>
         <Header user={user} onLogout={handleLogout} />
         <main className="max-w-md mx-auto relative z-10">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/job/:id" element={<JobDetail user={user} />} />
-            <Route path="/wallet" element={<WalletPage user={user} />} />
-            <Route path="/post-job" element={user.role === "employer" ? <PostJob /> : <Navigate to="/" />} />
-            <Route path="/submissions" element={<Submissions user={user} />} />
-            <Route path="/profile" element={
-              <div className="p-8 text-center space-y-10 relative">
-                <div className="space-y-4">
-                  <div className="w-28 h-28 bg-card rounded-[3rem] flex items-center justify-center mx-auto border border-white/10 shadow-2xl overflow-hidden relative group">
-                    <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-all"></div>
-                     <User className="w-14 h-14 text-zinc-600 group-hover:text-primary transition-all" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-light tracking-tight text-white">{user.name}</h2>
-                    <p className="text-[10px] text-primary uppercase tracking-[0.4em] font-black mt-2 opacity-80">{user.role}</p>
-                  </div>
-                </div>
-                
-                <div className="bg-card grid grid-cols-2 divide-x divide-white/[0.03] rounded-[2.5rem] border border-white/5 overflow-hidden card-shadow">
-                  <div className="p-6">
-                    <p className="text-2xl font-black text-secondary">5.0</p>
-                    <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mt-1">Trust Score</p>
-                  </div>
-                  <div className="p-6">
-                    <p className="text-2xl font-black text-white">12</p>
-                    <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mt-1">Protocols</p>
-                  </div>
-                </div>
+          <AnimatePresence mode="wait">
+            <motion.div key={location.pathname}>
+              <Routes location={location}>
+                <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+              <Route path="/job/:id" element={<PageTransition><JobDetail user={user} /></PageTransition>} />
+              <Route path="/wallet" element={<PageTransition><WalletPage user={user} /></PageTransition>} />
+              <Route path="/post-job" element={user.role === "employer" ? <PageTransition><PostJob /></PageTransition> : <Navigate to="/" />} />
+              <Route path="/submissions" element={<PageTransition><Submissions user={user} /></PageTransition>} />
+              <Route path="/profile" element={
+                <PageTransition>
+                  <div className="p-8 text-center space-y-10 relative">
+                    <div className="space-y-4">
+                      <div className="w-28 h-28 bg-card rounded-[3rem] flex items-center justify-center mx-auto border border-white/10 shadow-2xl overflow-hidden relative group">
+                        <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-all"></div>
+                        <User className="w-14 h-14 text-zinc-600 group-hover:text-primary transition-all" />
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-light tracking-tight text-white">{user.name}</h2>
+                        <p className="text-[10px] text-primary uppercase tracking-[0.4em] font-black mt-2 opacity-80">{user.role}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-card grid grid-cols-2 divide-x divide-white/[0.03] rounded-[2.5rem] border border-white/5 overflow-hidden card-shadow">
+                      <div className="p-6">
+                        <p className="text-2xl font-black text-secondary">5.0</p>
+                        <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mt-1">Trust Score</p>
+                      </div>
+                      <div className="p-6">
+                        <p className="text-2xl font-black text-white">12</p>
+                        <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mt-1">Protocols</p>
+                      </div>
+                    </div>
 
-                <div className="space-y-3">
-                   <button 
-                    onClick={toggleDemoRole}
-                    className="w-full py-4 bg-primary/20 border border-primary/30 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:bg-primary/30 transition-all"
-                   >
-                    Switch to {user.role === 'worker' ? 'Employer' : 'Worker'} Mode
-                   </button>
-                   <button className="w-full py-4 bg-white/5 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:bg-white/10 transition-all">Verification Status: Verified</button>
-                   <button className="w-full py-4 bg-white/5 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:bg-white/10 transition-all">Settings & Privacy</button>
-                </div>
-              </div>
-            } />
+                    <div className="space-y-3">
+                      <button 
+                        onClick={toggleDemoRole}
+                        className="w-full py-4 bg-primary/20 border border-primary/30 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:bg-primary/30 transition-all"
+                      >
+                        Switch to {user.role === 'worker' ? 'Employer' : 'Worker'} Mode
+                      </button>
+                      <button className="w-full py-4 bg-white/5 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:bg-white/10 transition-all">Verification Status: Verified</button>
+                      <button className="w-full py-4 bg-white/5 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:bg-white/10 transition-all">Settings & Privacy</button>
+                    </div>
+                  </div>
+                </PageTransition>
+              } />
           </Routes>
-        </main>
-        <BottomNav role={user.role} />
-      </div>
-    </BrowserRouter>
-  );
+        </motion.div>
+      </AnimatePresence>
+    </main>
+    <BottomNav role={user.role} />
+  </div>
+</BrowserRouter>
+);
 }
